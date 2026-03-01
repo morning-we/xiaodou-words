@@ -247,7 +247,7 @@ export default function PracticePage() {
               请选择正确的释义（ABC三个选项中有一个是正确的）
             </div>
             
-            {/* 选项列表 */}
+            {/* 选项列表 - 始终显示，无需点击 */}
             <div className="grid gap-4">
               {shuffledOptions.map((option, index) => {
                 const isSelected = selectedOption === index;
@@ -255,16 +255,19 @@ export default function PracticePage() {
                 
                 let buttonClass = 'w-full text-lg py-6 text-left px-8 transition-all duration-200 hover:scale-[1.02]';
                 
-                if (isAnswered) {
+                // 未答题时：白色背景，黑色文字，完整显示
+                if (!isAnswered) {
+                  buttonClass += ' bg-white hover:bg-green-50 border-2 border-gray-300 hover:border-green-500 text-black';
+                }
+                // 已答题后：正确答案绿色，错误答案红色，其他半透明
+                else {
                   if (isCorrect) {
                     buttonClass += ' bg-green-500 hover:bg-green-600 text-white border-green-600';
                   } else if (isSelected && !isCorrect) {
                     buttonClass += ' bg-red-500 hover:bg-red-600 text-white border-red-600';
                   } else {
-                    buttonClass += ' opacity-50';
+                    buttonClass += ' bg-gray-100 opacity-50 border-gray-300';
                   }
-                } else {
-                  buttonClass += ' bg-white hover:bg-green-50 border-2 border-gray-200 hover:border-green-400';
                 }
                 
                 return (
@@ -274,8 +277,8 @@ export default function PracticePage() {
                     className={buttonClass}
                     disabled={isAnswered}
                   >
-                    <span className="font-bold mr-4">{String.fromCharCode(65 + index)}.</span>
-                    <span className="flex-1">{option}</span>
+                    <span className="font-bold mr-4 text-black">{String.fromCharCode(65 + index)}.</span>
+                    <span className="flex-1 text-black">{option}</span>
                     {isAnswered && isCorrect && <span className="ml-auto text-2xl">✓</span>}
                     {isAnswered && isSelected && !isCorrect && <span className="ml-auto text-2xl">✗</span>}
                   </Button>
