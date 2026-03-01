@@ -5,18 +5,26 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// 随机排列数组
-export function shuffleArray<T>(array: T[]): T[] {
+// 简单的伪随机数生成器（使用固定种子）
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+// 随机排列数组（使用种子确保相同输入产生相同输出）
+export function shuffleArray<T>(array: T[], seed?: number): T[] {
   const shuffled = [...array];
+  const randomSeed = seed || Date.now();
+  
   for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(seededRandom(randomSeed + i) * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
 }
 
-// 随机排列选项并返回正确的选项索引
-export function shuffleOptions(options: string[], correctOption: number): {
+// 随机排列选项并返回正确的选项索引（使用种子确保稳定性）
+export function shuffleOptions(options: string[], correctOption: number, seed?: number): {
   shuffledOptions: string[];
   newCorrectIndex: number;
 } {
@@ -25,7 +33,7 @@ export function shuffleOptions(options: string[], correctOption: number): {
     originalIndex: idx
   }));
   
-  const shuffled = shuffleArray(optionsWithIndex);
+  const shuffled = shuffleArray(optionsWithIndex, seed);
   
   const newCorrectIndex = shuffled.findIndex(item => item.originalIndex === correctOption);
   const shuffledOptions = shuffled.map(item => item.option);

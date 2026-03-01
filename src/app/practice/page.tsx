@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -126,6 +126,15 @@ export default function PracticePage() {
 
   const currentWord = words[currentWordIndex];
 
+  // 使用 useMemo 确保选项只在切换单词时更新，避免每次渲染都重新计算
+  // 使用 currentWord.id 作为种子，确保相同单词的选项顺序总是相同的
+  // 将字符串 id 转换为数字作为种子
+  const wordIdAsNumber = currentWord?.id ? currentWord.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 0;
+  const { shuffledOptions, newCorrectIndex } = useMemo(
+    () => currentWord ? shuffleOptions(currentWord.options, currentWord.correctOption, wordIdAsNumber) : { shuffledOptions: [], newCorrectIndex: -1 },
+    [currentWord, currentWord?.id, currentWord?.options, currentWord?.correctOption, wordIdAsNumber]
+  );
+
   // 如果单词还没加载完成，显示加载中
   if (!currentWord && !isFinished) {
     return (
@@ -180,9 +189,6 @@ export default function PracticePage() {
       </div>
     );
   }
-
-  // 随机排列选项
-  const { shuffledOptions, newCorrectIndex } = shuffleOptions(currentWord.options, currentWord.correctOption);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-400 via-emerald-500 to-teal-600">
