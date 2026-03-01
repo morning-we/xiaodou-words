@@ -31,6 +31,19 @@ export interface WordMenu {
   category: string;
   createdAt: string;
   wordCount: number;
+  hasSubMenus: boolean; // 是否有子菜单
+  subMenus?: SubMenu[]; // 子菜单列表
+}
+
+// 子菜单类型
+export interface SubMenu {
+  id: string;
+  menuId: string; // 所属菜单ID
+  title: string;
+  description: string;
+  icon: string;
+  createdAt: string;
+  wordCount: number;
 }
 
 // 单词类型

@@ -162,6 +162,68 @@ export function updateMenu(menuId: string, updates: Partial<WordMenu>): void {
   }
 }
 
+// ===== 子菜单相关 =====
+const SUBMENUS_KEY = 'xiaodou_submenus';
+
+// 获取所有子菜单
+export function getAllSubMenus() {
+  if (typeof window === 'undefined') return [];
+  const subMenusJson = localStorage.getItem(SUBMENUS_KEY);
+  return subMenusJson ? JSON.parse(subMenusJson) : [];
+}
+
+// 保存所有子菜单
+export function saveAllSubMenus(subMenus: any[]): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(SUBMENUS_KEY, JSON.stringify(subMenus));
+}
+
+// 根据菜单ID获取子菜单
+export function getSubMenusByMenuId(menuId: string) {
+  return getAllSubMenus().filter((s: any) => s.menuId === menuId);
+}
+
+// 添加子菜单
+export function addSubMenu(subMenu: any) {
+  const subMenus = getAllSubMenus();
+  const newSubMenu = {
+    ...subMenu,
+    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+    createdAt: new Date().toISOString(),
+    wordCount: 0
+  };
+  
+  subMenus.push(newSubMenu);
+  saveAllSubMenus(subMenus);
+  
+  // 更新主菜单的 hasSubMenus 标记
+  const menus = getAllMenus();
+  const menuIndex = menus.findIndex(m => m.id === subMenu.menuId);
+  if (menuIndex !== -1) {
+    menus[menuIndex].hasSubMenus = true;
+    saveAllMenus(menus);
+  }
+  
+  return newSubMenu;
+}
+
+// 删除子菜单
+export function deleteSubMenu(subMenuId: string): void {
+  const subMenus = getAllSubMenus().filter((s: any) => s.id !== subMenuId);
+  saveAllSubMenus(subMenus);
+}
+
+// 更新子菜单
+export function updateSubMenu(subMenuId: string, updates: any): void {
+  const subMenus = getAllSubMenus();
+  const index = subMenus.findIndex((s: any) => s.id === subMenuId);
+  
+  if (index !== -1) {
+    subMenus[index] = { ...subMenus[index], ...updates };
+    saveAllSubMenus(subMenus);
+  }
+}
+
 // ===== 单词相关 =====
 const WORDS_KEY = 'xiaodou_words';
 
@@ -178,9 +240,17 @@ export function saveAllWords(words: Word[]): void {
   localStorage.setItem(WORDS_KEY, JSON.stringify(words));
 }
 
-// 根据菜单ID获取单词
+// 根据菜单ID获取单词（包括子菜单的单词）
 export function getWordsByMenuId(menuId: string): Word[] {
-  return getAllWords().filter(w => w.menuId === menuId);
+  // 获取主菜单的单词
+  const mainMenuWords = getAllWords().filter(w => w.menuId === menuId);
+  
+  // 获取该菜单下所有子菜单的单词
+  const subMenus = getSubMenusByMenuId(menuId);
+  const subMenuIds = subMenus.map((s: any) => s.id);
+  const subMenuWords = getAllWords().filter(w => subMenuIds.includes(w.menuId));
+  
+  return [...mainMenuWords, ...subMenuWords];
 }
 
 // 添加单词
@@ -349,31 +419,36 @@ export function initSampleData(): void {
       title: '四级核心词汇',
       description: '大学英语四级考试必备词汇',
       icon: '📚',
-      category: '英语'
+      category: '英语',
+      hasSubMenus: false
     },
     {
       title: '六级高频词汇',
       description: '大学英语六级考试高频词汇',
       icon: '🎯',
-      category: '英语'
+      category: '英语',
+      hasSubMenus: false
     },
     {
       title: '雅思基础词汇',
       description: '雅思考试基础词汇集合',
       icon: '🌍',
-      category: '英语'
+      category: '英语',
+      hasSubMenus: false
     },
     {
       title: '托福核心词汇',
       description: '托福考试核心词汇',
       icon: '✈️',
-      category: '英语'
+      category: '英语',
+      hasSubMenus: false
     },
     {
       title: '商务英语词汇',
       description: '职场商务必备词汇',
       icon: '💼',
-      category: '英语'
+      category: '英语',
+      hasSubMenus: false
     }
   ];
   

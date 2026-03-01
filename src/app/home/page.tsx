@@ -31,7 +31,14 @@ export default function HomePage() {
     router.push('/');
   };
 
-  const handleStartPractice = (menuId: string, menuTitle: string) => {
+  const handleMenuClick = (menuId: string, menuTitle: string, hasSubMenus: boolean) => {
+    // 如果有子菜单，进入详情页
+    if (hasSubMenus) {
+      router.push(`/menu-detail?menuId=${menuId}`);
+      return;
+    }
+    
+    // 如果没有子菜单，直接开始练习
     const words = getWordsByMenuId(menuId);
     
     if (words.length < 20) {
@@ -118,11 +125,11 @@ export default function HomePage() {
                     单词数量: <span className="font-bold text-green-600">{menu.wordCount}</span>
                   </div>
                   <Button
-                    onClick={() => handleStartPractice(menu.id, menu.title)}
+                    onClick={() => handleMenuClick(menu.id, menu.title, menu.hasSubMenus || false)}
                     className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
                     disabled={menu.wordCount < 20}
                   >
-                    开始练习
+                    {menu.hasSubMenus ? '查看详情' : '开始练习'}
                   </Button>
                 </div>
               </CardContent>

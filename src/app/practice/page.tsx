@@ -212,14 +212,21 @@ export default function PracticePage() {
                 🔊 播放读音
               </Button>
             </div>
-            <div className="text-xl text-gray-800">{currentWord.meaning}</div>
           </CardHeader>
           
-          <CardContent className="space-y-4">
-            <div className="text-center text-gray-600 mb-4">
-              选择正确的释义
+          <CardContent className="space-y-6">
+            {/* 显示单词释义 */}
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+              <div className="text-sm text-blue-600 mb-1 font-medium">单词释义</div>
+              <div className="text-xl text-gray-800 font-medium">{currentWord.meaning}</div>
+            </div>
+
+            {/* 提示信息 */}
+            <div className="text-center text-gray-600">
+              请选择单词对应的正确选项
             </div>
             
+            {/* 选项列表 */}
             <div className="grid gap-4">
               {shuffledOptions.map((option, index) => {
                 const isSelected = selectedOption === index;
@@ -247,7 +254,7 @@ export default function PracticePage() {
                     disabled={isAnswered}
                   >
                     <span className="font-bold mr-4">{String.fromCharCode(65 + index)}.</span>
-                    <span>{option}</span>
+                    <span className="flex-1">{option}</span>
                     {isAnswered && isCorrect && <span className="ml-auto text-2xl">✓</span>}
                     {isAnswered && isSelected && !isCorrect && <span className="ml-auto text-2xl">✗</span>}
                   </Button>

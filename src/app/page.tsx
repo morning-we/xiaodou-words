@@ -14,9 +14,21 @@ export default function SplashScreen() {
     // 初始化示例数据
     initSampleData();
 
+    // 检查是否首次访问
+    const hasVisited = localStorage.getItem('xiaodou_first_visit');
+    
     // 检查是否已登录
     const user = getCurrentUser();
     const targetRoute = user ? '/home' : '/login';
+
+    // 如果不是首次访问，直接跳转
+    if (hasVisited) {
+      router.push(targetRoute);
+      return;
+    }
+
+    // 标记为已访问
+    localStorage.setItem('xiaodou_first_visit', 'true');
 
     // 倒计时逻辑
     const timer = setInterval(() => {

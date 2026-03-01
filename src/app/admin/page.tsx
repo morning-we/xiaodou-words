@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getCurrentUser, getAllMenus, getAllUsers, getAllWords, getAllRecords, addMenu, deleteMenu, updateMenu, addWordsBulk, clearWordsByMenuId } from '@/lib/storage';
+import { getCurrentUser, getAllMenus, getAllUsers, getAllWords, getAllRecords, addMenu, deleteMenu, updateMenu, addWordsBulk, clearWordsByMenuId, getAllSubMenus, addSubMenu, deleteSubMenu, updateSubMenu, getSubMenusByMenuId } from '@/lib/storage';
 import { formatDateTime } from '@/lib/utils';
 import { User, WordMenu, Word, PracticeRecord } from '@/types';
 
@@ -30,13 +30,24 @@ export default function AdminPage() {
     title: '',
     description: '',
     icon: '📚',
-    category: '英语'
+    category: '英语',
+    hasSubMenus: false
   });
 
   // 单词上传状态
   const [isWordDialogOpen, setIsWordDialogOpen] = useState(false);
   const [selectedMenuId, setSelectedMenuId] = useState('');
   const [wordFileContent, setWordFileContent] = useState('');
+
+  // 子菜单管理状态
+  const [isSubMenuDialogOpen, setIsSubMenuDialogOpen] = useState(false);
+  const [editingSubMenu, setEditingSubMenu] = useState<any>(null);
+  const [subMenuForm, setSubMenuForm] = useState({
+    menuId: '',
+    title: '',
+    description: '',
+    icon: '📁'
+  });
 
   useEffect(() => {
     const currentUser = getCurrentUser();
@@ -63,7 +74,7 @@ export default function AdminPage() {
   // 菜单管理函数
   const handleAddMenu = () => {
     setEditingMenu(null);
-    setMenuForm({ title: '', description: '', icon: '📚', category: '英语' });
+    setMenuForm({ title: '', description: '', icon: '📚', category: '英语', hasSubMenus: false });
     setIsMenuDialogOpen(true);
   };
 
@@ -73,7 +84,8 @@ export default function AdminPage() {
       title: menu.title,
       description: menu.description,
       icon: menu.icon,
-      category: menu.category
+      category: menu.category,
+      hasSubMenus: menu.hasSubMenus || false
     });
     setIsMenuDialogOpen(true);
   };
@@ -158,6 +170,52 @@ export default function AdminPage() {
     }
   };
 
+  // 子菜单管理函数
+  const handleAddSubMenu = (menuId: string) => {
+    setEditingSubMenu(null);
+    setSubMenuForm({
+      menuId,
+      title: '',
+      description: '',
+      icon: '📁'
+    });
+    setIsSubMenuDialogOpen(true);
+  };
+
+  const handleEditSubMenu = (subMenu: any) => {
+    setEditingSubMenu(subMenu);
+    setSubMenuForm({
+      menuId: subMenu.menuId,
+      title: subMenu.title,
+      description: subMenu.description,
+      icon: subMenu.icon
+    });
+    setIsSubMenuDialogOpen(true);
+  };
+
+  const handleSaveSubMenu = () => {
+    if (!subMenuForm.title.trim()) {
+      alert('请输入子菜单标题');
+      return;
+    }
+
+    if (editingSubMenu) {
+      updateSubMenu(editingSubMenu.id, subMenuForm);
+    } else {
+      addSubMenu(subMenuForm);
+    }
+
+    setIsSubMenuDialogOpen(false);
+    loadData();
+  };
+
+  const handleDeleteSubMenu = (subMenuId: string) => {
+    if (confirm('确定要删除这个子菜单及其所有单词吗？')) {
+      deleteSubMenu(subMenuId);
+      loadData();
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-400 via-emerald-500 to-teal-600 flex items-center justify-center">
@@ -188,8 +246,9 @@ export default function AdminPage() {
       {/* 主要内容区 */}
       <main className="container mx-auto px-4 py-8 max-w-7xl">
         <Tabs defaultValue="menus" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="menus" className="data-[state=active]:bg-green-600">菜单管理</TabsTrigger>
+            <TabsTrigger value="submenus" className="data-[state=active]:bg-green-600">子菜单</TabsTrigger>
             <TabsTrigger value="words" className="data-[state=active]:bg-green-600">单词上传</TabsTrigger>
             <TabsTrigger value="users" className="data-[state=active]:bg-green-600">用户管理</TabsTrigger>
             <TabsTrigger value="records" className="data-[state=active]:bg-green-600">操作记录</TabsTrigger>
@@ -264,6 +323,92 @@ export default function AdminPage() {
             </Card>
           </TabsContent>
 
+          {/* 子菜单管理 */}
+          <TabsContent value="submenus">
+            <Card className="bg-white/95 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle>子菜单管理</CardTitle>
+                <CardDescription>管理菜单的子分类</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {menus.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">请先创建菜单</div>
+                ) : (
+                  <div className="space-y-6">
+                    {menus.map((menu) => {
+                      const subMenus = getSubMenusByMenuId(menu.id);
+                      return (
+                        <Card key={menu.id} className="border-2">
+                          <CardHeader>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <span className="text-3xl">{menu.icon}</span>
+                                <div>
+                                  <CardTitle className="text-lg">{menu.title}</CardTitle>
+                                  <CardDescription>子菜单数量：{subMenus.length}</CardDescription>
+                                </div>
+                              </div>
+                              <Button
+                                onClick={() => handleAddSubMenu(menu.id)}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                + 添加子菜单
+                              </Button>
+                            </div>
+                          </CardHeader>
+                          {subMenus.length > 0 && (
+                            <CardContent>
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>图标</TableHead>
+                                    <TableHead>标题</TableHead>
+                                    <TableHead>描述</TableHead>
+                                    <TableHead>单词数</TableHead>
+                                    <TableHead>操作</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {subMenus.map((subMenu: any) => (
+                                    <TableRow key={subMenu.id}>
+                                      <TableCell className="text-2xl">{subMenu.icon}</TableCell>
+                                      <TableCell className="font-medium">{subMenu.title}</TableCell>
+                                      <TableCell>{subMenu.description}</TableCell>
+                                      <TableCell>{subMenu.wordCount}</TableCell>
+                                      <TableCell>
+                                        <div className="flex space-x-2">
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => handleEditSubMenu(subMenu)}
+                                          >
+                                            编辑
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => handleDeleteSubMenu(subMenu.id)}
+                                            className="text-red-600 hover:text-red-700"
+                                          >
+                                            删除
+                                          </Button>
+                                        </div>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </CardContent>
+                          )}
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* 单词上传 */}
           <TabsContent value="words">
             <Card className="bg-white/95 backdrop-blur-sm">
@@ -273,38 +418,53 @@ export default function AdminPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {menus.map((menu) => (
-                    <Card key={menu.id} className="border-2">
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <span className="text-3xl">{menu.icon}</span>
-                            <div>
-                              <CardTitle className="text-lg">{menu.title}</CardTitle>
-                              <CardDescription>当前单词数：{menu.wordCount}</CardDescription>
+                  {menus.map((menu) => {
+                    const subMenus = getSubMenusByMenuId(menu.id);
+                    return (
+                      <Card key={menu.id} className="border-2">
+                        <CardHeader>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <span className="text-3xl">{menu.icon}</span>
+                              <div>
+                                <CardTitle className="text-lg">{menu.title}</CardTitle>
+                                <CardDescription>当前单词数：{menu.wordCount}</CardDescription>
+                              </div>
                             </div>
-                          </div>
-                          <div className="flex space-x-2">
                             <Button
                               onClick={() => handleOpenWordDialog(menu.id)}
                               className="bg-green-600 hover:bg-green-700"
                             >
                               上传单词
                             </Button>
-                            {menu.wordCount > 0 && (
-                              <Button
-                                variant="outline"
-                                onClick={() => handleClearWords(menu.id)}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                清空
-                              </Button>
-                            )}
                           </div>
-                        </div>
-                      </CardHeader>
-                    </Card>
-                  ))}
+                        </CardHeader>
+                        {subMenus.length > 0 && (
+                          <CardContent>
+                            <div className="space-y-2">
+                              <div className="text-sm text-gray-600 font-medium">子菜单：</div>
+                              {subMenus.map((subMenu: any) => (
+                                <div key={subMenu.id} className="flex items-center justify-between bg-gray-50 p-3 rounded">
+                                  <div className="flex items-center space-x-2">
+                                    <span>{subMenu.icon}</span>
+                                    <span className="font-medium">{subMenu.title}</span>
+                                    <span className="text-sm text-gray-500">({subMenu.wordCount} 个单词)</span>
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleOpenWordDialog(subMenu.id)}
+                                    className="bg-blue-600 hover:bg-blue-700"
+                                  >
+                                    上传
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        )}
+                      </Card>
+                    );
+                  })}
 
                   {menus.length === 0 && (
                     <div className="text-center py-8 text-gray-500">
@@ -471,6 +631,56 @@ abnormal	/æbˈnɔːml/	不正常的；反常的	正常的	不正常的	抽象�
                 取消
               </Button>
               <Button onClick={handleSaveMenu} className="bg-green-600 hover:bg-green-700">
+                保存
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 子菜单编辑对话框 */}
+      <Dialog open={isSubMenuDialogOpen} onOpenChange={setIsSubMenuDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>{editingSubMenu ? '编辑子菜单' : '添加子菜单'}</DialogTitle>
+            <DialogDescription>
+              {editingSubMenu ? '修改子菜单信息' : '创建新的子菜单分类'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="submenu-title">子菜单标题 *</Label>
+              <Input
+                id="submenu-title"
+                value={subMenuForm.title}
+                onChange={(e) => setSubMenuForm({ ...subMenuForm, title: e.target.value })}
+                placeholder="例如：第一单元"
+              />
+            </div>
+            <div>
+              <Label htmlFor="submenu-description">描述</Label>
+              <Input
+                id="submenu-description"
+                value={subMenuForm.description}
+                onChange={(e) => setSubMenuForm({ ...subMenuForm, description: e.target.value })}
+                placeholder="例如：基础词汇练习"
+              />
+            </div>
+            <div>
+              <Label htmlFor="submenu-icon">图标</Label>
+              <Input
+                id="submenu-icon"
+                value={subMenuForm.icon}
+                onChange={(e) => setSubMenuForm({ ...subMenuForm, icon: e.target.value })}
+                placeholder="选择一个表情符号"
+                maxLength={2}
+              />
+            </div>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={() => setIsSubMenuDialogOpen(false)}>
+                取消
+              </Button>
+              <Button onClick={handleSaveSubMenu} className="bg-green-600 hover:bg-green-700">
                 保存
               </Button>
             </div>
