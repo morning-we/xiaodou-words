@@ -24,7 +24,7 @@ export function shuffleArray<T>(array: T[], seed?: number): T[] {
 }
 
 // 随机排列选项并返回正确的选项索引（使用种子确保稳定性）
-export function shuffleOptions(options: string[], correctOption: number, seed?: number): {
+export function shuffleOptions(options: string[], correctOption: number, seed?: number, avoidPosition?: number): {
   shuffledOptions: string[];
   newCorrectIndex: number;
 } {
@@ -35,7 +35,21 @@ export function shuffleOptions(options: string[], correctOption: number, seed?: 
   
   const shuffled = shuffleArray(optionsWithIndex, seed);
   
-  const newCorrectIndex = shuffled.findIndex(item => item.originalIndex === correctOption);
+  let newCorrectIndex = shuffled.findIndex(item => item.originalIndex === correctOption);
+  
+  // 如果指定了要避免的位置，并且正确答案在该位置，则交换位置
+  if (avoidPosition !== undefined && newCorrectIndex === avoidPosition) {
+    // 找一个不同的位置进行交换
+    const swapPositions = [0, 1, 2].filter(pos => pos !== avoidPosition);
+    const swapPosition = swapPositions[0]; // 选择第一个可用的位置
+    
+    // 交换两个位置
+    [shuffled[newCorrectIndex], shuffled[swapPosition]] = [shuffled[swapPosition], shuffled[newCorrectIndex]];
+    
+    // 更新正确答案索引
+    newCorrectIndex = swapPosition;
+  }
+  
   const shuffledOptions = shuffled.map(item => item.option);
   
   return { shuffledOptions, newCorrectIndex };

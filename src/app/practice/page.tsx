@@ -24,6 +24,7 @@ export default function PracticePage() {
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
+  const [previousCorrectPosition, setPreviousCorrectPosition] = useState<number | undefined>(undefined); // 上一个正确答案的位置
 
   // 加载单词列表
   useEffect(() => {
@@ -96,6 +97,9 @@ export default function PracticePage() {
       setScore(prev => prev + 1);
     }
 
+    // 记录当前单词的正确答案位置，供下一个单词使用
+    setPreviousCorrectPosition(newCorrectIndex);
+
     // 立即进入下一题或结束
     if (currentWordIndex < words.length - 1) {
       setCurrentWordIndex(prev => prev + 1);
@@ -112,6 +116,7 @@ export default function PracticePage() {
       setCurrentWordIndex(prev => prev - 1);
       setSelectedOption(null);
       setIsAnswered(false);
+      setPreviousCorrectPosition(undefined); // 手动切换单词时，重置上一个正确答案位置
     }
   };
 
@@ -120,6 +125,7 @@ export default function PracticePage() {
       setCurrentWordIndex(prev => prev + 1);
       setSelectedOption(null);
       setIsAnswered(false);
+      setPreviousCorrectPosition(undefined); // 手动切换单词时，重置上一个正确答案位置
     }
   };
 
@@ -145,6 +151,7 @@ export default function PracticePage() {
     setIsFinished(false);
     setSelectedOption(null);
     setIsAnswered(false);
+    setPreviousCorrectPosition(undefined); // 重置上一个正确答案位置
     setStartTime(Date.now());
   };
 
@@ -152,11 +159,12 @@ export default function PracticePage() {
 
   // 使用 useMemo 确保选项只在切换单词时更新，避免每次渲染都重新计算
   // 使用 currentWord.id 作为种子，确保相同单词的选项顺序总是相同的
+  // 避免与上一个正确答案位置重复
   // 将字符串 id 转换为数字作为种子
   const wordIdAsNumber = currentWord?.id ? currentWord.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) : 0;
   const { shuffledOptions, newCorrectIndex } = useMemo(
-    () => currentWord ? shuffleOptions(currentWord.options, currentWord.correctOption, wordIdAsNumber) : { shuffledOptions: [], newCorrectIndex: -1 },
-    [currentWord, currentWord?.id, currentWord?.options, currentWord?.correctOption, wordIdAsNumber]
+    () => currentWord ? shuffleOptions(currentWord.options, currentWord.correctOption, wordIdAsNumber, previousCorrectPosition) : { shuffledOptions: [], newCorrectIndex: -1 },
+    [currentWord, currentWord?.id, currentWord?.options, currentWord?.correctOption, wordIdAsNumber, previousCorrectPosition]
   );
 
   // 如果单词还没加载完成，显示加载中
