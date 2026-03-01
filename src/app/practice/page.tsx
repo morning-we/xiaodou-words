@@ -25,6 +25,7 @@ export default function PracticePage() {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
 
+  // 加载单词列表
   useEffect(() => {
     const user = getCurrentUser();
     if (!user) {
@@ -42,23 +43,24 @@ export default function PracticePage() {
     // 检查是否是重新练习模式
     const storageKey = `xiaodou_practice_words_${menuId}`;
     
-    if (isRetry) {
-      // 重新练习：从 localStorage 读取之前保存的单词列表
-      const savedWordsJson = localStorage.getItem(storageKey);
-      if (savedWordsJson) {
-        const savedWords = JSON.parse(savedWordsJson);
-        setWords(savedWords);
-        setStartTime(Date.now());
-        return;
-      }
+    // 优先从 localStorage 读取之前保存的单词列表
+    const savedWordsJson = localStorage.getItem(storageKey);
+    if (savedWordsJson && words.length === 0) {
+      // 只在首次加载时从 localStorage 读取
+      const savedWords = JSON.parse(savedWordsJson);
+      setWords(savedWords);
+      setStartTime(Date.now());
+      return;
     }
     
-    // 首次练习：随机取20个单词并保存到 localStorage
-    const shuffledWords = allWords.sort(() => Math.random() - 0.5).slice(0, 20);
-    setWords(shuffledWords);
-    localStorage.setItem(storageKey, JSON.stringify(shuffledWords));
-    setStartTime(Date.now());
-  }, [menuId, router, isRetry]);
+    // 如果没有保存的单词，随机取20个单词并保存到 localStorage
+    if (words.length === 0) {
+      const shuffledWords = allWords.sort(() => Math.random() - 0.5).slice(0, 20);
+      setWords(shuffledWords);
+      localStorage.setItem(storageKey, JSON.stringify(shuffledWords));
+      setStartTime(Date.now());
+    }
+  }, [menuId, router, words.length]);
 
   // 倒计时逻辑 - 总时间30秒，不会重置
   useEffect(() => {
@@ -135,6 +137,17 @@ export default function PracticePage() {
     router.push('/home');
   };
 
+  const handleRetryPractice = () => {
+    // 重置所有状态
+    setCurrentWordIndex(0);
+    setScore(0);
+    setTimeLeft(30);
+    setIsFinished(false);
+    setSelectedOption(null);
+    setIsAnswered(false);
+    setStartTime(Date.now());
+  };
+
   const currentWord = words[currentWordIndex];
 
   // 使用 useMemo 确保选项只在切换单词时更新，避免每次渲染都重新计算
@@ -188,7 +201,7 @@ export default function PracticePage() {
                 返回首页
               </Button>
               <Button
-                onClick={() => router.push(`/practice?menuId=${menuId}&menuTitle=${encodeURIComponent(menuTitle)}&retry=true`)}
+                onClick={handleRetryPractice}
                 variant="outline"
                 className="flex-1 text-lg py-6"
               >
