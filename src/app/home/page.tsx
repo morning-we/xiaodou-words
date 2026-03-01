@@ -82,13 +82,6 @@ export default function HomePage() {
               <Button
                 variant="outline"
                 className="bg-white/20 hover:bg-white/30 text-white border-white/50"
-                onClick={() => router.push('/admin')}
-              >
-                后台管理
-              </Button>
-              <Button
-                variant="outline"
-                className="bg-white/20 hover:bg-white/30 text-white border-white/50"
                 onClick={handleLogout}
               >
                 退出

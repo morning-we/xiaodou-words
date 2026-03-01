@@ -78,7 +78,7 @@ export default function PracticePage() {
       setScore(prev => prev + 1);
     }
 
-    // 1.5秒后自动进入下一题或结束
+    // 2秒后自动进入下一题或结束
     setTimeout(() => {
       if (currentWordIndex < words.length - 1) {
         setCurrentWordIndex(prev => prev + 1);
@@ -89,7 +89,25 @@ export default function PracticePage() {
         setIsFinished(true);
         savePracticeResult(score + (isCorrect ? 1 : 0));
       }
-    }, 1500);
+    }, 2000);
+  };
+
+  const handlePrevious = () => {
+    if (currentWordIndex > 0) {
+      setCurrentWordIndex(prev => prev - 1);
+      setTimeLeft(30);
+      setSelectedOption(null);
+      setIsAnswered(false);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentWordIndex < words.length - 1) {
+      setCurrentWordIndex(prev => prev + 1);
+      setTimeLeft(30);
+      setSelectedOption(null);
+      setIsAnswered(false);
+    }
   };
 
   const savePracticeResult = (finalScore: number) => {
@@ -215,15 +233,9 @@ export default function PracticePage() {
           </CardHeader>
           
           <CardContent className="space-y-6">
-            {/* 显示单词释义 */}
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
-              <div className="text-sm text-blue-600 mb-1 font-medium">单词释义</div>
-              <div className="text-xl text-gray-800 font-medium">{currentWord.meaning}</div>
-            </div>
-
             {/* 提示信息 */}
-            <div className="text-center text-gray-600">
-              请选择单词对应的正确选项
+            <div className="text-center text-gray-600 font-medium">
+              请选择正确的释义（ABC三个选项中有一个是正确的）
             </div>
             
             {/* 选项列表 */}
@@ -260,6 +272,31 @@ export default function PracticePage() {
                   </Button>
                 );
               })}
+            </div>
+
+            {/* 导航按钮 */}
+            <div className="flex justify-between items-center pt-4 border-t">
+              <Button
+                onClick={handlePrevious}
+                variant="outline"
+                disabled={currentWordIndex === 0 || isAnswered}
+                className="px-8"
+              >
+                ← 上一个
+              </Button>
+              
+              <div className="text-gray-600">
+                进度: {currentWordIndex + 1} / {words.length}
+              </div>
+              
+              <Button
+                onClick={handleNext}
+                variant="outline"
+                disabled={currentWordIndex === words.length - 1 || isAnswered}
+                className="px-8"
+              >
+                下一个 →
+              </Button>
             </div>
           </CardContent>
         </Card>
