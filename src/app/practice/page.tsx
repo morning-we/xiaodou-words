@@ -44,7 +44,7 @@ export default function PracticePage() {
     setStartTime(Date.now());
   }, [menuId, router]);
 
-  // 倒计时逻辑
+  // 倒计时逻辑 - 总时间30秒，不会重置
   useEffect(() => {
     if (isFinished) return;
 
@@ -60,7 +60,7 @@ export default function PracticePage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [currentWordIndex, isFinished]);
+  }, [isFinished]);
 
   const handleTimeOut = () => {
     setIsAnswered(true);
@@ -78,24 +78,20 @@ export default function PracticePage() {
       setScore(prev => prev + 1);
     }
 
-    // 2秒后自动进入下一题或结束
-    setTimeout(() => {
-      if (currentWordIndex < words.length - 1) {
-        setCurrentWordIndex(prev => prev + 1);
-        setTimeLeft(30);
-        setSelectedOption(null);
-        setIsAnswered(false);
-      } else {
-        setIsFinished(true);
-        savePracticeResult(score + (isCorrect ? 1 : 0));
-      }
-    }, 2000);
+    // 立即进入下一题或结束
+    if (currentWordIndex < words.length - 1) {
+      setCurrentWordIndex(prev => prev + 1);
+      setSelectedOption(null);
+      setIsAnswered(false);
+    } else {
+      setIsFinished(true);
+      savePracticeResult(score + (isCorrect ? 1 : 0));
+    }
   };
 
   const handlePrevious = () => {
     if (currentWordIndex > 0) {
       setCurrentWordIndex(prev => prev - 1);
-      setTimeLeft(30);
       setSelectedOption(null);
       setIsAnswered(false);
     }
@@ -104,7 +100,6 @@ export default function PracticePage() {
   const handleNext = () => {
     if (currentWordIndex < words.length - 1) {
       setCurrentWordIndex(prev => prev + 1);
-      setTimeLeft(30);
       setSelectedOption(null);
       setIsAnswered(false);
     }
