@@ -14,6 +14,7 @@ export default function PracticePage() {
   const searchParams = useSearchParams();
   const menuId = searchParams.get('menuId') || '';
   const menuTitle = decodeURIComponent(searchParams.get('menuTitle') || '');
+  const isRetry = searchParams.get('retry') === 'true'; // 是否是重新练习
 
   const [words, setWords] = useState<Word[]>([]);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
@@ -38,11 +39,26 @@ export default function PracticePage() {
       return;
     }
 
-    // 随机取20个单词
+    // 检查是否是重新练习模式
+    const storageKey = `xiaodou_practice_words_${menuId}`;
+    
+    if (isRetry) {
+      // 重新练习：从 localStorage 读取之前保存的单词列表
+      const savedWordsJson = localStorage.getItem(storageKey);
+      if (savedWordsJson) {
+        const savedWords = JSON.parse(savedWordsJson);
+        setWords(savedWords);
+        setStartTime(Date.now());
+        return;
+      }
+    }
+    
+    // 首次练习：随机取20个单词并保存到 localStorage
     const shuffledWords = allWords.sort(() => Math.random() - 0.5).slice(0, 20);
     setWords(shuffledWords);
+    localStorage.setItem(storageKey, JSON.stringify(shuffledWords));
     setStartTime(Date.now());
-  }, [menuId, router]);
+  }, [menuId, router, isRetry]);
 
   // 倒计时逻辑 - 总时间30秒，不会重置
   useEffect(() => {
@@ -172,7 +188,7 @@ export default function PracticePage() {
                 返回首页
               </Button>
               <Button
-                onClick={() => router.push(`/practice?menuId=${menuId}&menuTitle=${encodeURIComponent(menuTitle)}`)}
+                onClick={() => router.push(`/practice?menuId=${menuId}&menuTitle=${encodeURIComponent(menuTitle)}&retry=true`)}
                 variant="outline"
                 className="flex-1 text-lg py-6"
               >
