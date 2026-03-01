@@ -9,6 +9,7 @@ export interface User {
   practiceCount: number; // 练习次数
   checkInDays: number; // 签到天数
   lastCheckInDate: string; // 上次签到日期
+  practicedMenus: string[]; // 已获得积分的词表ID列表（防止重复刷积分）
   createdAt: string;
   operationLogs: OperationLog[];
 }

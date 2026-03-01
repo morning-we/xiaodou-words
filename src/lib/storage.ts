@@ -55,6 +55,7 @@ export function registerUser(username: string, password: string): { success: boo
     practiceCount: 0,
     checkInDays: 0,
     lastCheckInDate: '',
+    practicedMenus: [],
     createdAt: new Date().toISOString(),
     operationLogs: []
   };
@@ -369,7 +370,15 @@ export function updateUserPractice(userId: string, score: number, correctCount: 
   
   if (!user) return;
   
-  // 更新总分和练习次数
+  // 初始化 practicedMenus 数组（如果不存在）
+  if (!user.practicedMenus) {
+    user.practicedMenus = [];
+  }
+  
+  // 检查是否是第一次练习这个词表
+  const isFirstPractice = !user.practicedMenus.includes(menuId);
+  
+  // 更新总分和练习次数（得分始终增加）
   user.totalScore += score;
   user.practiceCount += 1;
   
@@ -379,15 +388,24 @@ export function updateUserPractice(userId: string, score: number, correctCount: 
   const totalCorrect = userRecords.reduce((sum, r) => sum + r.correctCount, 0) + correctCount;
   user.correctRate = Math.round((totalCorrect / totalQuestions) * 100);
   
-  // 计算积分（每100分1积分 + 签到积分）
-  const practicePoints = calculatePoints(user.totalScore);
-  const checkInPoints = user.checkInDays;
-  user.points = practicePoints + checkInPoints;
+  // 如果是第一次练习这个词表，则增加积分
+  if (isFirstPractice) {
+    user.practicedMenus.push(menuId);
+    // 计算积分（每100分1积分 + 签到积分）
+    const practicePoints = calculatePoints(user.totalScore);
+    const checkInPoints = user.checkInDays;
+    user.points = practicePoints + checkInPoints;
+  }
+  // 如果不是第一次练习，积分保持不变（只增加得分）
   
   updateUser(user);
   
   // 添加练习记录
-  addOperationLog(userId, '单词练习', `完成${menuTitle}练习，得分${score}/20，用时${duration}秒`);
+  const logDetails = isFirstPractice 
+    ? `完成${menuTitle}练习，得分${score}/20，用时${duration}秒（首次练习获得积分）`
+    : `完成${menuTitle}练习，得分${score}/20，用时${duration}秒（重复练习，不获得积分）`;
+  addOperationLog(userId, '单词练习', logDetails);
+  
   addRecord({
     id: Date.now().toString(),
     userId,
