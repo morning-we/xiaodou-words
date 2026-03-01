@@ -247,13 +247,14 @@ export default function PracticePage() {
               请选择正确的释义（ABC三个选项中有一个是正确的）
             </div>
             
-            {/* 选项列表 - 始终显示，无需点击 */}
+            {/* 选项列表 - 始终显示，无跳动效果 */}
             <div className="grid gap-4">
               {shuffledOptions.map((option, index) => {
                 const isSelected = selectedOption === index;
                 const isCorrect = index === newCorrectIndex;
                 
-                let buttonClass = 'w-full text-lg py-6 text-left px-8 transition-all duration-200 hover:scale-[1.02]';
+                // 基础样式：无动画效果，避免跳动
+                let buttonClass = 'w-full text-lg py-6 text-left px-8 hover:scale-[1.01]';
                 
                 // 未答题时：白色背景，黑色文字，完整显示
                 if (!isAnswered) {
@@ -262,9 +263,9 @@ export default function PracticePage() {
                 // 已答题后：正确答案绿色，错误答案红色，其他半透明
                 else {
                   if (isCorrect) {
-                    buttonClass += ' bg-green-500 hover:bg-green-600 text-white border-green-600';
+                    buttonClass += ' bg-green-500 text-white border-green-600';
                   } else if (isSelected && !isCorrect) {
-                    buttonClass += ' bg-red-500 hover:bg-red-600 text-white border-red-600';
+                    buttonClass += ' bg-red-500 text-white border-red-600';
                   } else {
                     buttonClass += ' bg-gray-100 opacity-50 border-gray-300';
                   }
@@ -272,7 +273,7 @@ export default function PracticePage() {
                 
                 return (
                   <Button
-                    key={index}
+                    key={`${currentWord.id}-${index}`}
                     onClick={() => handleOptionClick(index, isCorrect)}
                     className={buttonClass}
                     disabled={isAnswered}
