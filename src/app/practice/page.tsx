@@ -247,14 +247,14 @@ export default function PracticePage() {
               请选择正确的释义（ABC三个选项中有一个是正确的）
             </div>
             
-            {/* 选项列表 - 始终显示，无跳动效果 */}
+            {/* 选项列表 - 内容稳定，只在切换单词时更新 */}
             <div className="grid gap-4">
               {shuffledOptions.map((option, index) => {
                 const isSelected = selectedOption === index;
                 const isCorrect = index === newCorrectIndex;
                 
-                // 基础样式：无动画效果，避免跳动
-                let buttonClass = 'w-full text-lg py-6 text-left px-8 hover:scale-[1.01]';
+                // 基础样式：完全无动画，内容稳定
+                let buttonClass = 'w-full text-lg py-6 text-left px-8';
                 
                 // 未答题时：白色背景，黑色文字，完整显示
                 if (!isAnswered) {
