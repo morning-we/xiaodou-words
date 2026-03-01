@@ -126,6 +126,15 @@ export default function PracticePage() {
 
   const currentWord = words[currentWordIndex];
 
+  // 如果单词还没加载完成，显示加载中
+  if (!currentWord && !isFinished) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-400 via-emerald-500 to-teal-600 flex items-center justify-center">
+        <div className="text-white text-xl">加载单词中...</div>
+      </div>
+    );
+  }
+
   if (!currentWord || isFinished) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-400 via-emerald-500 to-teal-600 flex items-center justify-center p-4">
