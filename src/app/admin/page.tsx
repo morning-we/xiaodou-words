@@ -3,239 +3,46 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getCurrentUser, getAllMenus, getAllUsers, getAllWords, getAllRecords, addMenu, deleteMenu, updateMenu, addWordsBulk, clearWordsByMenuId, getAllSubMenus, addSubMenu, deleteSubMenu, updateSubMenu, getSubMenusByMenuId } from '@/lib/storage';
-import { formatDateTime } from '@/lib/utils';
-import { User, WordMenu, Word, PracticeRecord } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getCurrentUser } from '@/lib/storage';
+import { User } from '@/types';
 
 export default function AdminPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [menus, setMenus] = useState<WordMenu[]>([]);
-  const [words, setWords] = useState<Word[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [records, setRecords] = useState<PracticeRecord[]>([]);
-
-  // 菜单管理状态
-  const [isMenuDialogOpen, setIsMenuDialogOpen] = useState(false);
-  const [editingMenu, setEditingMenu] = useState<WordMenu | null>(null);
-  const [menuForm, setMenuForm] = useState({
-    title: '',
-    description: '',
-    icon: '📚',
-    category: '英语',
-    hasSubMenus: false
-  });
-
-  // 单词上传状态
-  const [isWordDialogOpen, setIsWordDialogOpen] = useState(false);
-  const [selectedMenuId, setSelectedMenuId] = useState('');
-  const [wordFileContent, setWordFileContent] = useState('');
-  const [uploadMethod, setUploadMethod] = useState<'paste' | 'file'>('paste');
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-
-  // 子菜单管理状态
-  const [isSubMenuDialogOpen, setIsSubMenuDialogOpen] = useState(false);
-  const [editingSubMenu, setEditingSubMenu] = useState<any>(null);
-  const [subMenuForm, setSubMenuForm] = useState({
-    menuId: '',
-    title: '',
-    description: '',
-    icon: '📁'
-  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const currentUser = getCurrentUser();
-    if (!currentUser) {
-      router.push('/login');
-      return;
-    }
-    
-    setUser(currentUser);
-    loadData();
-  }, [router]);
-
-  const loadData = () => {
-    setMenus(getAllMenus());
-    setWords(getAllWords());
-    setUsers(getAllUsers().sort((a, b) => b.points - a.points));
-    setRecords(getAllRecords().slice(0, 50));
-  };
-
-  const handleBackToHome = () => {
-    router.push('/home');
-  };
-
-  // 菜单管理函数
-  const handleAddMenu = () => {
-    setEditingMenu(null);
-    setMenuForm({ title: '', description: '', icon: '📚', category: '英语', hasSubMenus: false });
-    setIsMenuDialogOpen(true);
-  };
-
-  const handleEditMenu = (menu: WordMenu) => {
-    setEditingMenu(menu);
-    setMenuForm({
-      title: menu.title,
-      description: menu.description,
-      icon: menu.icon,
-      category: menu.category,
-      hasSubMenus: menu.hasSubMenus || false
-    });
-    setIsMenuDialogOpen(true);
-  };
-
-  const handleSaveMenu = () => {
-    if (!menuForm.title.trim()) {
-      alert('请输入菜单标题');
-      return;
-    }
-
-    if (editingMenu) {
-      updateMenu(editingMenu.id, menuForm);
-    } else {
-      addMenu(menuForm);
-    }
-
-    setIsMenuDialogOpen(false);
-    loadData();
-  };
-
-  const handleDeleteMenu = (menuId: string) => {
-    if (confirm('确定要删除这个菜单及其所有单词吗？')) {
-      deleteMenu(menuId);
-      clearWordsByMenuId(menuId);
-      loadData();
-    }
-  };
-
-  // 单词上传函数
-  const handleOpenWordDialog = (menuId: string) => {
-    setSelectedMenuId(menuId);
-    setWordFileContent('');
-    setUploadedFile(null);
-    setIsWordDialogOpen(true);
-  };
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setUploadedFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const content = e.target?.result as string;
-        setWordFileContent(content);
-      };
-      reader.readAsText(file);
-    }
-  };
-
-  const handleUploadWords = () => {
-    if (!wordFileContent.trim()) {
-      alert('请输入单词内容');
-      return;
-    }
-
     try {
-      const lines = wordFileContent.trim().split('\n');
-      const newWords: Omit<Word, 'id'>[] = [];
+      const currentUser = getCurrentUser();
+      console.log('Admin page - Current user:', currentUser);
       
-      lines.forEach((line, index) => {
-        const parts = line.split('\t').map(p => p.trim());
-        if (parts.length >= 4) {
-          const [word, phonetic, meaning, correctAnswer, ...options] = parts;
-          newWords.push({
-            menuId: selectedMenuId,
-            word,
-            phonetic,
-            meaning,
-            options: options.length >= 2 ? options.slice(0, 2).concat([correctAnswer]) : [meaning, '选项B', '选项C'],
-            correctOption: 2, // 默认第三个选项为正确答案
-            difficulty: 'easy'
-          });
-        }
-      });
-
-      if (newWords.length === 0) {
-        alert('请按正确格式输入单词内容');
+      if (!currentUser) {
+        console.log('Admin page - No user, redirecting to login');
+        router.push('/login');
         return;
       }
-
-      if (confirm(`即将添加 ${newWords.length} 个单词，确定吗？`)) {
-        addWordsBulk(newWords);
-        setIsWordDialogOpen(false);
-        loadData();
-        alert(`成功添加 ${newWords.length} 个单词！`);
-      }
+      
+      setUser(currentUser);
+      setLoading(false);
     } catch (error) {
-      alert('解析单词内容失败，请检查格式');
+      console.error('Admin page - Error loading user:', error);
+      setLoading(false);
     }
-  };
+  }, [router]);
 
-  const handleClearWords = (menuId: string) => {
-    if (confirm('确定要清空该菜单下的所有单词吗？')) {
-      clearWordsByMenuId(menuId);
-      loadData();
-    }
-  };
-
-  // 子菜单管理函数
-  const handleAddSubMenu = (menuId: string) => {
-    setEditingSubMenu(null);
-    setSubMenuForm({
-      menuId,
-      title: '',
-      description: '',
-      icon: '📁'
-    });
-    setIsSubMenuDialogOpen(true);
-  };
-
-  const handleEditSubMenu = (subMenu: any) => {
-    setEditingSubMenu(subMenu);
-    setSubMenuForm({
-      menuId: subMenu.menuId,
-      title: subMenu.title,
-      description: subMenu.description,
-      icon: subMenu.icon
-    });
-    setIsSubMenuDialogOpen(true);
-  };
-
-  const handleSaveSubMenu = () => {
-    if (!subMenuForm.title.trim()) {
-      alert('请输入子菜单标题');
-      return;
-    }
-
-    if (editingSubMenu) {
-      updateSubMenu(editingSubMenu.id, subMenuForm);
-    } else {
-      addSubMenu(subMenuForm);
-    }
-
-    setIsSubMenuDialogOpen(false);
-    loadData();
-  };
-
-  const handleDeleteSubMenu = (subMenuId: string) => {
-    if (confirm('确定要删除这个子菜单及其所有单词吗？')) {
-      deleteSubMenu(subMenuId);
-      loadData();
-    }
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">加载中...</div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-400 via-emerald-500 to-teal-600 flex items-center justify-center">
-        <div className="text-white text-xl">加载中...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">未登录，跳转到登录页...</div>
       </div>
     );
   }
@@ -248,7 +55,7 @@ export default function AdminPage() {
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
-              onClick={handleBackToHome}
+              onClick={() => router.push('/home')}
               className="text-white hover:bg-white/10"
             >
               ← 返回首页
@@ -261,544 +68,52 @@ export default function AdminPage() {
 
       {/* 主要内容区 */}
       <main className="container mx-auto px-4 py-8 max-w-7xl">
-        <Tabs defaultValue="menus" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
-            <TabsTrigger value="menus" className="data-[state=active]:bg-green-600">菜单管理</TabsTrigger>
-            <TabsTrigger value="submenus" className="data-[state=active]:bg-green-600">子菜单</TabsTrigger>
-            <TabsTrigger value="words" className="data-[state=active]:bg-green-600">单词上传</TabsTrigger>
-            <TabsTrigger value="users" className="data-[state=active]:bg-green-600">用户管理</TabsTrigger>
-            <TabsTrigger value="records" className="data-[state=active]:bg-green-600">操作记录</TabsTrigger>
-          </TabsList>
-
-          {/* 菜单管理 */}
-          <TabsContent value="menus">
-            <Card className="bg-white/95 backdrop-blur-sm">
-              <CardHeader>
-                <div className="flex items-center justify-between">
+        <Card className="bg-white/95 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle>后台管理系统</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-gray-600">欢迎来到后台管理系统，管理员：{user.username}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Button 
+                  variant="outline" 
+                  className="h-32 text-left"
+                  onClick={() => alert('菜单管理功能开发中')}
+                >
                   <div>
-                    <CardTitle>菜单管理</CardTitle>
-                    <CardDescription>管理单词练习菜单</CardDescription>
+                    <div className="text-2xl mb-2">📚</div>
+                    <div className="font-bold">菜单管理</div>
+                    <div className="text-sm text-gray-500">管理单词练习菜单</div>
                   </div>
-                  <Button onClick={handleAddMenu} className="bg-green-600 hover:bg-green-700">
-                    + 添加菜单
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {menus.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">暂无菜单</div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>图标</TableHead>
-                        <TableHead>标题</TableHead>
-                        <TableHead>描述</TableHead>
-                        <TableHead>分类</TableHead>
-                        <TableHead>单词数</TableHead>
-                        <TableHead>操作</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {menus.map((menu) => (
-                        <TableRow key={menu.id}>
-                          <TableCell className="text-2xl">{menu.icon}</TableCell>
-                          <TableCell className="font-medium">{menu.title}</TableCell>
-                          <TableCell>{menu.description}</TableCell>
-                          <TableCell>
-                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
-                              {menu.category}
-                            </span>
-                          </TableCell>
-                          <TableCell>{menu.wordCount}</TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleEditMenu(menu)}
-                              >
-                                编辑
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleDeleteMenu(menu.id)}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                删除
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* 子菜单管理 */}
-          <TabsContent value="submenus">
-            <Card className="bg-white/95 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle>子菜单管理</CardTitle>
-                <CardDescription>管理菜单的子分类</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {menus.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">请先创建菜单</div>
-                ) : (
-                  <div className="space-y-6">
-                    {menus.map((menu) => {
-                      const subMenus = getSubMenusByMenuId(menu.id);
-                      return (
-                        <Card key={menu.id} className="border-2">
-                          <CardHeader>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-3">
-                                <span className="text-3xl">{menu.icon}</span>
-                                <div>
-                                  <CardTitle className="text-lg">{menu.title}</CardTitle>
-                                  <CardDescription>子菜单数量：{subMenus.length}</CardDescription>
-                                </div>
-                              </div>
-                              <Button
-                                onClick={() => handleAddSubMenu(menu.id)}
-                                className="bg-green-600 hover:bg-green-700"
-                              >
-                                + 添加子菜单
-                              </Button>
-                            </div>
-                          </CardHeader>
-                          {subMenus.length > 0 && (
-                            <CardContent>
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>图标</TableHead>
-                                    <TableHead>标题</TableHead>
-                                    <TableHead>描述</TableHead>
-                                    <TableHead>单词数</TableHead>
-                                    <TableHead>操作</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {subMenus.map((subMenu: any) => (
-                                    <TableRow key={subMenu.id}>
-                                      <TableCell className="text-2xl">{subMenu.icon}</TableCell>
-                                      <TableCell className="font-medium">{subMenu.title}</TableCell>
-                                      <TableCell>{subMenu.description}</TableCell>
-                                      <TableCell>{subMenu.wordCount}</TableCell>
-                                      <TableCell>
-                                        <div className="flex space-x-2">
-                                          <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => handleEditSubMenu(subMenu)}
-                                          >
-                                            编辑
-                                          </Button>
-                                          <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => handleDeleteSubMenu(subMenu.id)}
-                                            className="text-red-600 hover:text-red-700"
-                                          >
-                                            删除
-                                          </Button>
-                                        </div>
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </CardContent>
-                          )}
-                        </Card>
-                      );
-                    })}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-32 text-left"
+                  onClick={() => alert('单词上传功能开发中')}
+                >
+                  <div>
+                    <div className="text-2xl mb-2">📝</div>
+                    <div className="font-bold">单词上传</div>
+                    <div className="text-sm text-gray-500">批量上传单词</div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* 单词上传 */}
-          <TabsContent value="words">
-            <Card className="bg-white/95 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle>单词上传</CardTitle>
-                <CardDescription>选择菜单并批量上传单词</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {menus.map((menu) => {
-                    const subMenus = getSubMenusByMenuId(menu.id);
-                    return (
-                      <Card key={menu.id} className="border-2">
-                        <CardHeader>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <span className="text-3xl">{menu.icon}</span>
-                              <div>
-                                <CardTitle className="text-lg">{menu.title}</CardTitle>
-                                <CardDescription>当前单词数：{menu.wordCount}</CardDescription>
-                              </div>
-                            </div>
-                            <Button
-                              onClick={() => handleOpenWordDialog(menu.id)}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              上传单词
-                            </Button>
-                          </div>
-                        </CardHeader>
-                        {subMenus.length > 0 && (
-                          <CardContent>
-                            <div className="space-y-2">
-                              <div className="text-sm text-gray-600 font-medium">子菜单：</div>
-                              {subMenus.map((subMenu: any) => (
-                                <div key={subMenu.id} className="flex items-center justify-between bg-gray-50 p-3 rounded">
-                                  <div className="flex items-center space-x-2">
-                                    <span>{subMenu.icon}</span>
-                                    <span className="font-medium">{subMenu.title}</span>
-                                    <span className="text-sm text-gray-500">({subMenu.wordCount} 个单词)</span>
-                                  </div>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleOpenWordDialog(subMenu.id)}
-                                    className="bg-blue-600 hover:bg-blue-700"
-                                  >
-                                    上传
-                                  </Button>
-                                </div>
-                              ))}
-                            </div>
-                          </CardContent>
-                        )}
-                      </Card>
-                    );
-                  })}
-
-                  {menus.length === 0 && (
-                    <div className="text-center py-8 text-gray-500">
-                      暂无菜单，请先创建菜单
-                    </div>
-                  )}
-
-                  {/* 单词格式说明 */}
-                  <Card className="bg-blue-50 border-blue-200">
-                    <CardHeader>
-                      <CardTitle className="text-lg text-blue-800">单词文件格式说明</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm text-gray-700">
-                      <p className="mb-3">每行一个单词，使用制表符（Tab）分隔，格式如下：</p>
-                      <pre className="bg-white p-3 rounded border text-xs overflow-x-auto">
-{`单词	音标	释义	正确答案	选项A	选项B	选项C
-
-示例：
-abandon	/əˈbændən/	放弃；抛弃	放弃	继续	开始
-ability	/əˈbɪləti/	能力；本领	能力	残疾	可能性
-abnormal	/æbˈnɔːml/	不正常的；反常的	正常的	不正常的	抽象的`}
-                      </pre>
-                    </CardContent>
-                  </Card>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* 用户管理 */}
-          <TabsContent value="users">
-            <Card className="bg-white/95 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle>用户管理</CardTitle>
-                <CardDescription>查看所有用户信息</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>排名</TableHead>
-                      <TableHead>用户名</TableHead>
-                      <TableHead>积分</TableHead>
-                      <TableHead>总得分</TableHead>
-                      <TableHead>正确率</TableHead>
-                      <TableHead>练习次数</TableHead>
-                      <TableHead>签到天数</TableHead>
-                      <TableHead>注册时间</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((u, index) => (
-                      <TableRow key={u.id}>
-                        <TableCell>
-                          <span className={`font-bold ${index < 3 ? 'text-2xl' : ''}`}>
-                            {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
-                          </span>
-                        </TableCell>
-                        <TableCell className="font-medium">{u.username}</TableCell>
-                        <TableCell className="font-bold text-yellow-600">{u.points}</TableCell>
-                        <TableCell>{u.totalScore}</TableCell>
-                        <TableCell>{u.correctRate}%</TableCell>
-                        <TableCell>{u.practiceCount}</TableCell>
-                        <TableCell>{u.checkInDays}</TableCell>
-                        <TableCell>{formatDate(u.createdAt)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* 操作记录 */}
-          <TabsContent value="records">
-            <Card className="bg-white/95 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle>操作记录</CardTitle>
-                <CardDescription>查看所有用户的操作记录</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {records.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">暂无记录</div>
-                  ) : (
-                    records.map((record) => (
-                      <div key={record.id} className="p-4 bg-gray-50 rounded-lg border">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium">{record.menuTitle}</span>
-                          <span className="text-sm text-gray-500">{formatDateTime(record.completedAt)}</span>
-                        </div>
-                        <div className="flex items-center space-x-4 text-sm">
-                          <span className="text-gray-600">用户：{users.find(u => u.id === record.userId)?.username || '未知'}</span>
-                          <span className="text-green-600 font-medium">得分：{record.score}/20</span>
-                          <span className="text-blue-600">用时：{record.duration}秒</span>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-32 text-left"
+                  onClick={() => alert('用户管理功能开发中')}
+                >
+                  <div>
+                    <div className="text-2xl mb-2">👥</div>
+                    <div className="font-bold">用户管理</div>
+                    <div className="text-sm text-gray-500">查看和管理用户</div>
+                  </div>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </main>
-
-      {/* 菜单编辑对话框 */}
-      <Dialog open={isMenuDialogOpen} onOpenChange={setIsMenuDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>{editingMenu ? '编辑菜单' : '添加菜单'}</DialogTitle>
-            <DialogDescription>
-              {editingMenu ? '修改菜单信息' : '创建新的单词练习菜单'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="menu-title">菜单标题 *</Label>
-              <Input
-                id="menu-title"
-                value={menuForm.title}
-                onChange={(e) => setMenuForm({ ...menuForm, title: e.target.value })}
-                placeholder="例如：四级核心词汇"
-              />
-            </div>
-            <div>
-              <Label htmlFor="menu-description">描述</Label>
-              <Input
-                id="menu-description"
-                value={menuForm.description}
-                onChange={(e) => setMenuForm({ ...menuForm, description: e.target.value })}
-                placeholder="例如：大学英语四级考试必备词汇"
-              />
-            </div>
-            <div>
-              <Label htmlFor="menu-icon">图标</Label>
-              <Input
-                id="menu-icon"
-                value={menuForm.icon}
-                onChange={(e) => setMenuForm({ ...menuForm, icon: e.target.value })}
-                placeholder="选择一个表情符号"
-                maxLength={2}
-              />
-            </div>
-            <div>
-              <Label htmlFor="menu-category">分类</Label>
-              <Select
-                value={menuForm.category}
-                onValueChange={(value) => setMenuForm({ ...menuForm, category: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="选择分类" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="英语">英语</SelectItem>
-                  <SelectItem value="日语">日语</SelectItem>
-                  <SelectItem value="法语">法语</SelectItem>
-                  <SelectItem value="其他">其他</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button variant="outline" onClick={() => setIsMenuDialogOpen(false)}>
-                取消
-              </Button>
-              <Button onClick={handleSaveMenu} className="bg-green-600 hover:bg-green-700">
-                保存
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* 子菜单编辑对话框 */}
-      <Dialog open={isSubMenuDialogOpen} onOpenChange={setIsSubMenuDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>{editingSubMenu ? '编辑子菜单' : '添加子菜单'}</DialogTitle>
-            <DialogDescription>
-              {editingSubMenu ? '修改子菜单信息' : '创建新的子菜单分类'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="submenu-title">子菜单标题 *</Label>
-              <Input
-                id="submenu-title"
-                value={subMenuForm.title}
-                onChange={(e) => setSubMenuForm({ ...subMenuForm, title: e.target.value })}
-                placeholder="例如：第一单元"
-              />
-            </div>
-            <div>
-              <Label htmlFor="submenu-description">描述</Label>
-              <Input
-                id="submenu-description"
-                value={subMenuForm.description}
-                onChange={(e) => setSubMenuForm({ ...subMenuForm, description: e.target.value })}
-                placeholder="例如：基础词汇练习"
-              />
-            </div>
-            <div>
-              <Label htmlFor="submenu-icon">图标</Label>
-              <Input
-                id="submenu-icon"
-                value={subMenuForm.icon}
-                onChange={(e) => setSubMenuForm({ ...subMenuForm, icon: e.target.value })}
-                placeholder="选择一个表情符号"
-                maxLength={2}
-              />
-            </div>
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button variant="outline" onClick={() => setIsSubMenuDialogOpen(false)}>
-                取消
-              </Button>
-              <Button onClick={handleSaveSubMenu} className="bg-green-600 hover:bg-green-700">
-                保存
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* 单词上传对话框 */}
-      <Dialog open={isWordDialogOpen} onOpenChange={setIsWordDialogOpen}>
-        <DialogContent className="sm:max-w-[700px]">
-          <DialogHeader>
-            <DialogTitle>上传单词</DialogTitle>
-            <DialogDescription>支持多种文件格式：TXT、CSV、JSON</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            {/* 上传方式选择 */}
-            <div>
-              <Label>上传方式</Label>
-              <div className="flex gap-4 mt-2">
-                <Button
-                  type="button"
-                  variant={uploadMethod === 'paste' ? 'default' : 'outline'}
-                  onClick={() => setUploadMethod('paste')}
-                  className={uploadMethod === 'paste' ? 'bg-green-600' : ''}
-                >
-                  粘贴文本
-                </Button>
-                <Button
-                  type="button"
-                  variant={uploadMethod === 'file' ? 'default' : 'outline'}
-                  onClick={() => setUploadMethod('file')}
-                  className={uploadMethod === 'file' ? 'bg-green-600' : ''}
-                >
-                  上传文件
-                </Button>
-              </div>
-            </div>
-
-            {/* 文件上传 */}
-            {uploadMethod === 'file' && (
-              <div>
-                <Label htmlFor="file-upload">选择文件</Label>
-                <Input
-                  id="file-upload"
-                  type="file"
-                  accept=".txt,.csv,.json"
-                  onChange={handleFileSelect}
-                  className="mt-2"
-                />
-                {uploadedFile && (
-                  <p className="text-sm text-gray-600 mt-2">
-                    已选择: {uploadedFile.name} ({(uploadedFile.size / 1024).toFixed(2)} KB)
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* 文本输入 */}
-            {uploadMethod === 'paste' && (
-              <div>
-                <Label htmlFor="word-content">单词内容 *</Label>
-                <Textarea
-                  id="word-content"
-                  value={wordFileContent}
-                  onChange={(e) => setWordFileContent(e.target.value)}
-                  placeholder={`单词	音标	释义	正确答案	选项A	选项B	选项C\n\n示例：\nabandon	/əˈbændən/	放弃；抛弃	放弃	继续	开始\nability	/əˈbɪləti/	能力；本领	能力	残疾	可能性`}
-                  className="font-mono text-sm"
-                  rows={10}
-                />
-              </div>
-            )}
-
-            {/* 支持的文件格式说明 */}
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
-              <div className="text-sm text-blue-600 font-medium mb-2">支持的文件格式：</div>
-              <ul className="text-xs text-gray-700 space-y-1">
-                <li><strong>TXT 文件</strong>：每行一个单词，使用制表符（Tab）分隔</li>
-                <li><strong>CSV 文件</strong>：逗号分隔或制表符分隔的文件</li>
-                <li><strong>JSON 文件</strong>：JSON数组格式，每个单词包含word、phonetic、meaning、options字段</li>
-              </ul>
-            </div>
-
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button variant="outline" onClick={() => setIsWordDialogOpen(false)}>
-                取消
-              </Button>
-              <Button onClick={handleUploadWords} className="bg-green-600 hover:bg-green-700">
-                上传
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
-}
-
-function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  });
 }
