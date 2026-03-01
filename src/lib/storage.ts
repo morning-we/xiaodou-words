@@ -459,20 +459,20 @@ export function initSampleData(): void {
   
   // 四级词汇
   const cet4Words = [
-    { word: 'abandon', phonetic: '/əˈbændən/', meaning: '放弃；抛弃', options: ['放弃', '继续', '开始'], correctOption: 0 },
-    { word: 'ability', phonetic: '/əˈbɪləti/', meaning: '能力；本领', options: ['能力', '残疾', '可能性'], correctOption: 0 },
-    { word: 'abnormal', phonetic: '/æbˈnɔːml/', meaning: '不正常的；反常的', options: ['正常的', '不正常的', '抽象的'], correctOption: 1 },
-    { word: 'aboard', phonetic: '/əˈbɔːd/', meaning: '在船（车、飞机）上', options: ['在船上', '在船下', '在旁边'], correctOption: 0 },
-    { word: 'absence', phonetic: '/ˈæbsəns/', meaning: '缺席；不在', options: ['出席', '缺席', '存在'], correctOption: 1 }
+    { word: 'abandon', phonetic: '/əˈbændən/', meaning: '放弃；抛弃', options: ['放弃；抛弃', '继续；保持', '开始；启动'], correctOption: 0 },
+    { word: 'ability', phonetic: '/əˈbɪləti/', meaning: '能力；本领', options: ['能力；本领', '残疾；缺陷', '可能性；可能'], correctOption: 0 },
+    { word: 'abnormal', phonetic: '/æbˈnɔːml/', meaning: '不正常的；反常的', options: ['正常的；常规的', '不正常的；反常的', '抽象的；理论的'], correctOption: 1 },
+    { word: 'aboard', phonetic: '/əˈbɔːd/', meaning: '在船（车、飞机）上', options: ['在船（车、飞机）上', '在船（车、飞机）下', '在船（车、飞机）旁边'], correctOption: 0 },
+    { word: 'absence', phonetic: '/ˈæbsəns/', meaning: '缺席；不在', options: ['出席；在场', '缺席；不在', '存在；生存'], correctOption: 1 }
   ];
   
   // 六级词汇
   const cet6Words = [
-    { word: 'abundant', phonetic: '/əˈbʌndənt/', meaning: '丰富的；充裕的', options: ['稀少的', '丰富的', '充足的'], correctOption: 1 },
-    { word: 'accelerate', phonetic: '/əkˈseləreɪt/', meaning: '加速；促进', options: ['减速', '加速', '停止'], correctOption: 1 },
-    { word: 'accomplish', phonetic: '/əˈkʌmplɪʃ/', meaning: '完成；实现', options: ['放弃', '完成', '计划'], correctOption: 1 },
-    { word: 'acknowledge', phonetic: '/əkˈnɒlɪdʒ/', meaning: '承认；致谢', options: ['否认', '承认', '忽略'], correctOption: 1 },
-    { word: 'acquire', phonetic: '/əˈkwaɪər/', meaning: '获得；取得', options: ['获得', '丢失', '询问'], correctOption: 0 }
+    { word: 'abundant', phonetic: '/əˈbʌndənt/', meaning: '丰富的；充裕的', options: ['稀少的；不足的', '丰富的；充裕的', '充足的；足够的'], correctOption: 1 },
+    { word: 'accelerate', phonetic: '/əkˈseləreɪt/', meaning: '加速；促进', options: ['减速；延缓', '加速；促进', '停止；终止'], correctOption: 1 },
+    { word: 'accomplish', phonetic: '/əˈkʌmplɪʃ/', meaning: '完成；实现', options: ['放弃；抛弃', '完成；实现', '计划；安排'], correctOption: 1 },
+    { word: 'acknowledge', phonetic: '/əkˈnɒlɪdʒ/', meaning: '承认；致谢', options: ['否认；抵赖', '承认；致谢', '忽略；忽视'], correctOption: 1 },
+    { word: 'acquire', phonetic: '/əˈkwaɪər/', meaning: '获得；取得', options: ['获得；取得', '丢失；遗失', '询问；查询'], correctOption: 0 }
   ];
   
   // 添加单词（重复到20个）

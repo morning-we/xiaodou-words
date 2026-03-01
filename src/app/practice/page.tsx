@@ -230,10 +230,6 @@ export default function PracticePage() {
                 🔊 播放读音
               </Button>
             </div>
-            {/* 单词释义 */}
-            <div className="text-2xl text-gray-800 font-medium bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg text-left">
-              {currentWord.meaning}
-            </div>
           </CardHeader>
           
           <CardContent className="space-y-6">
