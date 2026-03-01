@@ -134,13 +134,7 @@ export default function HomePage() {
           <div className="text-center py-12">
             <div className="text-6xl mb-4">📭</div>
             <h3 className="text-2xl font-bold text-white mb-2">暂无单词菜单</h3>
-            <p className="text-white/80 mb-6">请联系管理员添加单词菜单</p>
-            <Button
-              onClick={() => router.push('/admin')}
-              className="bg-white/20 hover:bg-white/30 text-white border-white/50"
-            >
-              前往后台管理
-            </Button>
+            <p className="text-white/80">暂无可用的单词练习内容</p>
           </div>
         )}
       </main>
