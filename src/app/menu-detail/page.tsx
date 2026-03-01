@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { getCurrentUser, getAllMenus, getSubMenusByMenuId, getWordsByMenuId } from '@/lib/storage';
 import { WordMenu } from '@/types';
 
-export default function MenuDetailPage() {
+function MenuDetailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const menuId = searchParams.get('menuId') || '';
@@ -184,5 +184,17 @@ export default function MenuDetailPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function MenuDetailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-gray-100 to-slate-200 flex items-center justify-center">
+        <div className="text-gray-600 text-xl">加载中...</div>
+      </div>
+    }>
+      <MenuDetailContent />
+    </Suspense>
   );
 }

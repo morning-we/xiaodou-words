@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { getCurrentUser, getWordsByMenuId, updateUserPractice } from '@/lib/stor
 import { shuffleOptions, speakWord, formatTime } from '@/lib/utils';
 import { Word } from '@/types';
 
-export default function PracticePage() {
+function PracticeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const menuId = searchParams.get('menuId') || '';
@@ -353,5 +353,17 @@ export default function PracticePage() {
         </Card>
       </main>
     </div>
+  );
+}
+
+export default function PracticePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-gray-100 to-slate-200 flex items-center justify-center">
+        <div className="text-gray-600 text-xl">加载中...</div>
+      </div>
+    }>
+      <PracticeContent />
+    </Suspense>
   );
 }
